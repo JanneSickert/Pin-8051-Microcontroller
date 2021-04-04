@@ -3,6 +3,7 @@ LJMP Main
 ORG 3h; Jumping address of the 0 interrupt on Port 3.2
 LJMP Save_value
 LJMP Show
+ORG 256d
 
 ;----------------------------
 ; init the interrupt and counter
@@ -23,10 +24,16 @@ RET
 ;----------------------------
 
 Check:; Check the Pin
-	CJNE R4, #3d, Fail
-	CJNE R5, #1d, Fail
-	CJNE R6, #7d, Fail
-	CJNE R7, #4d, Fail
+	MOV R0, A
+	MOV A, R4
+	CJNE A, 255d, Fail
+	MOV A, R5
+	CJNE A, 254d, Fail
+	MOV A, R6
+	CJNE A, 253d, Fail
+	MOV A, R7
+	CJNE A, 252d, Fail
+	MOV A, R0
 	SETB P0.7
 RETI
 
@@ -74,9 +81,26 @@ RETI
 
 ;----------------------------
 
+Load_Data:
+	MOV DPTR, #Table
+	MOV A, #0d
+	MOVC A, @A+DPTR
+	MOV 255d, A
+	MOV A, #1d
+	MOVC A, @A+DPTR
+	MOV 254d, A
+	MOV A, #2d
+	MOVC A, @A+DPTR
+	MOV 253d, A
+	MOV A, #3d
+	MOVC A, @A+DPTR
+	MOV 252d, A
+	MOV A, #0d
+RET
+
 Main:
 	MOV P0, #0d
-	MOV A, #0d
+	CALL Load_Data
 	CALL EX0_INIT
 	CALL Counter_Init
 
@@ -84,9 +108,7 @@ Show:
 	MOV P2, TL0
 	SJMP Show
 
-Finish:
-	MOV P2, #0d
-	SJMP Finish
+Finish: SJMP $
 
 Fail:
 MOV P2, #0d
@@ -114,5 +136,10 @@ Delay:
 	DJNZ R1, j2
 	DJNZ R0, j1
 RET
+
+; The pin is saved here.
+ORG 200h
+	Table:
+	DB 3, 1, 7, 4
 
 END
